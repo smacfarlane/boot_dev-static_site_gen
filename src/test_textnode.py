@@ -1,7 +1,7 @@
 import unittest
 
 from htmlnode import LeafNode
-from textnode import InvalidTextTypeError, TextNode, text_node_to_html_node
+from textnode import * 
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
@@ -66,6 +66,59 @@ class TestTextNode(unittest.TestCase):
         node = TextNode("sample text", "cats", "https://cats.cats")
 
         self.assertRaises(InvalidTextTypeError, text_node_to_html_node, node)
+
+    def test_split_code_block(self):
+        node = TextNode("This is text with a `code block` word", "text")
+        new_nodes = split_nodes_delimiter([node], "`", "code")
+
+        self.assertListEqual(
+                [
+                    TextNode("This is text with a ", "text"),
+                    TextNode("code block", "code"),
+                    TextNode(" word", "text")
+                ], 
+                new_nodes)
+
+    def test_split_italic_block(self):
+        node = TextNode("This is text with a *italic block* word", "text")
+        new_nodes = split_nodes_delimiter([node], "*", "italic")
+
+        self.assertListEqual(
+                [
+                    TextNode("This is text with a ", "text"),
+                    TextNode("italic block", "italic"),
+                    TextNode(" word", "text")
+                ], 
+                new_nodes)
+
+    def test_split_bold_block(self):
+        node = TextNode("This is text with a **bold block** word", "text")
+        new_nodes = split_nodes_delimiter([node], "**", "bold")
+
+        self.assertListEqual(
+                [
+                    TextNode("This is text with a ", "text"),
+                    TextNode("bold block", "bold"),
+                    TextNode(" word", "text")
+                ], 
+                new_nodes)
+
+    def test_split_bold_with_italic_block(self):
+        node = TextNode("This is text with a **bold *italic* block** word", "text")
+        new_nodes = split_nodes_delimiter([node], "**", "bold")
+
+        self.assertListEqual(
+                [
+                    TextNode("This is text with a ", "text"),
+                    TextNode("bold *italic* block", "bold"),
+                    TextNode(" word", "text")
+                ], 
+                new_nodes)
+
+    def test_unclosed_delimter(self):
+        node = TextNode("This is text with a *italic block word", "italic")
+        
+        self.assertRaises(InvalidMarkdownError, split_nodes_delimiter, node)
 
 if __name__ == "__main__":
     unittest.main()

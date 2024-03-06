@@ -17,6 +17,7 @@ class TextNode:
         return f"TextNode({self.text}, {self.text_type}, {self.url})"
 
 InvalidTextTypeError = Exception
+InvalidMarkdownError = Exception
 
 def text_node_to_html_node(text_node) -> HtmlNode:
     if text_node.text_type == "text":
@@ -34,3 +35,22 @@ def text_node_to_html_node(text_node) -> HtmlNode:
 
     raise InvalidTextTypeError(text_node.text_type)
 
+def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    nodes = []
+
+    for node in old_nodes:
+        if not isinstance(node, TextNode):
+            nodes.append(node)
+            continue
+
+        split = node.text.split(delimiter)
+        # Unclosed delimiters result in an even number of nodes
+        if len(split) % 2 == 0:
+            raise InvalidMarkdownError(f"unclosed delimeter: {delimiter}")
+        for i in range(0, len(split)):
+            if i % 2 == 0:
+                nodes.append(TextNode(split[i], "text"))
+            else:
+                nodes.append(TextNode(split[i], text_type))
+
+    return nodes
