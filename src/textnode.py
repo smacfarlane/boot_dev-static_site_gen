@@ -86,7 +86,7 @@ def split_nodes_delimiter(old_nodes, text_type: TextType) -> list[TextNode]:
             raise InvalidMarkdownError(f"unclosed delimeter: {text_type.delimeter()}")
         for i in range(0, len(split)):
             if i % 2 == 0:
-                nodes.append(TextNode(split[i], TextType.Text))
+                nodes.append(TextNode(split[i], node.text_type))
             else:
                 nodes.append(TextNode(split[i], text_type))
 
@@ -97,9 +97,8 @@ def split_nodes_image(old_nodes) -> list[TextNode]:
     for old_node in old_nodes:
         images = extract_markdown_images(old_node.text)
         if len(images) == 0:
-            result.append(old_node.text)
+            result.append(old_node)
             continue
-
 
         unparsed = old_node.text
         for (alt, src) in images:
@@ -117,6 +116,9 @@ def split_nodes_image(old_nodes) -> list[TextNode]:
 def split_nodes_link(old_nodes) -> list[TextNode]:
     result = []
     for old_node in old_nodes:
+        if isinstance(old_node, str):
+            raise ValueError(f"{old_nodes} - {old_node}")
+
         images = extract_markdown_links(old_node.text)
         if len(images) == 0:
             result.append(old_node)
@@ -136,3 +138,15 @@ def split_nodes_link(old_nodes) -> list[TextNode]:
      
     return result
 
+def text_to_textnodes(text) -> list[TextNode]:
+    result = []
+    text = TextNode(text, TextType.Text)
+
+    # Bold must be before italic as * would match **
+    result = split_nodes_delimiter([text], TextType.Bold)
+    result = split_nodes_delimiter(result, TextType.Italic)
+    result = split_nodes_delimiter(result, TextType.Code)
+    result = split_nodes_image(result)
+    result = split_nodes_link(result)
+
+    return result

@@ -154,6 +154,23 @@ class TestTextNode(unittest.TestCase):
             ]
         self.assertListEqual(expected, new_nodes)
 
+    def test_split_text(self):
+        text = "This is **text** with an *italic* word and a `code block` and an ![image](https://i.imgur.com/zjjcJKZ.png) and a [link](https://boot.dev)"
+        expected = [
+            TextNode("This is ", TextType.Text),
+            TextNode("text", TextType.Bold),
+            TextNode(" with an ", TextType.Text),
+            TextNode("italic", TextType.Italic),
+            TextNode(" word and a ", TextType.Text),
+            TextNode("code block", TextType.Code),
+            TextNode(" and an ", TextType.Text),
+            TextNode("image", TextType.Image, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(" and a ", TextType.Text),
+            TextNode("link", TextType.Link, "https://boot.dev"),
+        ]
+        
+        self.assertListEqual(expected, text_to_textnodes(text))
+
 
 if __name__ == "__main__":
     unittest.main()
