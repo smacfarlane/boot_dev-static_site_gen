@@ -1,6 +1,6 @@
 import unittest
 
-from blocks import markdown_to_blocks
+from blocks import markdown_to_blocks, block_to_block_type, BlockType
 
 class TestBlocks(unittest.TestCase):
     def test_simple_markdown(self):
@@ -36,3 +36,100 @@ Item'''
             '''
         blocks = markdown_to_blocks(md)
         self.assertEqual(0, len(blocks))
+
+    def test_headings(self):
+        self.assertEqual(BlockType.Heading, block_to_block_type("# words"))
+        self.assertEqual(BlockType.Heading, block_to_block_type("## words"))
+        self.assertEqual(BlockType.Heading, block_to_block_type("### words"))
+        self.assertEqual(BlockType.Heading, block_to_block_type("#### words"))
+        self.assertEqual(BlockType.Heading, block_to_block_type("##### words"))
+        self.assertEqual(BlockType.Heading, block_to_block_type("###### words"))
+
+    def test_code(self):
+        multiline = '''```
+
+        ```'''
+        empty = '``````'
+        self.assertEqual(BlockType.Code, block_to_block_type(multiline))
+        self.assertEqual(BlockType.Code, block_to_block_type(empty))
+
+    def test_quotes(self):
+        multiline = '''> Quotes
+>
+> with a blank line'''
+        single = '> text'
+        trailing= '''> Quotes
+>
+> with a blank line
+>'''
+        
+        self.assertEqual(BlockType.Quote, block_to_block_type(multiline))
+        self.assertEqual(BlockType.Quote, block_to_block_type(single))
+        self.assertEqual(BlockType.Quote, block_to_block_type(trailing))
+
+    def test_unordered_lists(self):
+        star_single = "* Item"
+        star_nospace = "*"
+        star_multi = """* Item
+* 
+* With blank"""
+        
+        dash_single = "* Item"
+        dash_nospace = "*"
+        dash_multi = """* Item
+* 
+* With blank"""
+
+        mixed = """* Item
+- other item
+* last item"""
+
+        self.assertEqual(BlockType.UnorderedList, block_to_block_type(star_single))
+        self.assertEqual(BlockType.UnorderedList, block_to_block_type(star_nospace))
+        self.assertEqual(BlockType.UnorderedList, block_to_block_type(star_multi))
+        self.assertEqual(BlockType.UnorderedList, block_to_block_type(dash_single))
+        self.assertEqual(BlockType.UnorderedList, block_to_block_type(dash_nospace))
+        self.assertEqual(BlockType.UnorderedList, block_to_block_type(dash_multi))
+        self.assertEqual(BlockType.UnorderedList, block_to_block_type(mixed))
+
+    def test_ordered_list(self):
+        single = "1. item"
+        multi = """1. item
+2. other
+3. last"""
+
+        self.assertEqual(BlockType.OrderedList, block_to_block_type(single))
+        self.assertEqual(BlockType.OrderedList, block_to_block_type(multi))
+
+    def test_paragraph(self):
+        # Poorly formed headings
+        self.assertEqual(BlockType.Paragraph, block_to_block_type("#Heading"))
+        self.assertEqual(BlockType.Paragraph, block_to_block_type("####### Heading"))
+
+        # Invalid code blocks
+        self.assertEqual(BlockType.Paragraph, block_to_block_type("`````"))
+        self.assertEqual(BlockType.Paragraph, block_to_block_type("```code"))
+
+        # Invalid quote blocks
+        self.assertEqual(BlockType.Paragraph, block_to_block_type(">\nwords"))
+
+        # Invalid unordered lists
+        invalid_uolist = """- Item
+other item
+- Last Item"""
+        self.assertEqual(BlockType.Paragraph, block_to_block_type(invalid_uolist))
+
+        # Invalid ordered lists
+        invalid_start_count = "2. Item"
+        skipped_count = """1. Item
+2. Other
+4. Cat"""
+        mixed = """1. Item
+> quote
+"""
+        self.assertEqual(BlockType.Paragraph, block_to_block_type(invalid_start_count))
+        self.assertEqual(BlockType.Paragraph, block_to_block_type(skipped_count))
+        self.assertEqual(BlockType.Paragraph, block_to_block_type(mixed))
+        
+        
+        
