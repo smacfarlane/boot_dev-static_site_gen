@@ -1,6 +1,7 @@
 import unittest
 
-from textnode import TextNode
+from htmlnode import LeafNode
+from textnode import InvalidTextTypeError, TextNode, text_node_to_html_node
 
 class TestTextNode(unittest.TestCase):
     def test_eq(self):
@@ -31,7 +32,40 @@ class TestTextNode(unittest.TestCase):
         self.assertEqual(f"{node}", "TextNode(This is a bold node, bold, None)")
         self.assertEqual(f"{node2}", "TextNode(This is an italic node with url, bold, test.dev)")
 
+    def test_text_node_to_html_node(self):
+        node = text_node_to_html_node(TextNode("sample text", "text"))
 
+        self.assertIsInstance(node, LeafNode)
+        self.assertEqual("sample text", node.value)
+        self.assertIsNone(node.tag)
+
+    def test_bold_node_to_html_node(self):
+        node = text_node_to_html_node(TextNode("sample text", "bold"))
+
+        self.assertIsInstance(node, LeafNode)
+        self.assertEqual("sample text", node.value)
+        self.assertEqual("b", node.tag)
+
+    def test_link_node_to_html_node(self):
+        node = text_node_to_html_node(TextNode("sample text", "link", "https://test.dev"))
+
+        self.assertIsInstance(node, LeafNode)
+        self.assertEqual("sample text", node.value)
+        self.assertEqual("a", node.tag)
+        self.assertDictEqual({"href": "https://test.dev"}, node.props)
+
+    def test_image_node_to_html_node(self):
+        node = text_node_to_html_node(TextNode("sample text", "image", "https://test.dev"))
+
+        self.assertIsInstance(node, LeafNode)
+        self.assertIsNone(node.value)
+        self.assertEqual("img", node.tag)
+        self.assertDictEqual({"alt": "sample text", "src": "https://test.dev"}, node.props)
+
+    def test_invalid_text_node_to_html_node(self):
+        node = TextNode("sample text", "cats", "https://cats.cats")
+
+        self.assertRaises(InvalidTextTypeError, text_node_to_html_node, node)
 
 if __name__ == "__main__":
     unittest.main()
