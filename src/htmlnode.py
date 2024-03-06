@@ -34,5 +34,8 @@ class LeafNode(HtmlNode):
             props = " " + props
         return f"<{self.tag}{props}>{self.value}</{self.tag}>"
 
+    def __repr__(self) -> str:
+        return f"LeafNode({self.tag}, {self.value}, {self.children}, {self.props_to_html()})"
+
 
 
