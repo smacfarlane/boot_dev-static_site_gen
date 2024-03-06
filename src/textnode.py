@@ -1,3 +1,4 @@
+from extractors import extract_markdown_images, extract_markdown_links
 from htmlnode import HtmlNode, LeafNode
 from enum import Enum
 
@@ -71,7 +72,7 @@ def text_node_to_html_node(text_node) -> HtmlNode:
 
     raise InvalidTextTypeError(text_node.text_type)
 
-def split_nodes_delimiter(old_nodes, text_type: TextType):
+def split_nodes_delimiter(old_nodes, text_type: TextType) -> list[TextNode]:
     nodes = []
 
     for node in old_nodes:
@@ -90,3 +91,48 @@ def split_nodes_delimiter(old_nodes, text_type: TextType):
                 nodes.append(TextNode(split[i], text_type))
 
     return nodes
+
+def split_nodes_image(old_nodes) -> list[TextNode]:
+    result = []
+    for old_node in old_nodes:
+        images = extract_markdown_images(old_node.text)
+        if len(images) == 0:
+            result.append(old_node.text)
+            continue
+
+
+        unparsed = old_node.text
+        for (alt, src) in images:
+            split = unparsed.split(f"![{alt}]({src})", 1)
+            if split[0] != "":
+                result.append(TextNode(split[0], TextType.Text))
+            result.append(TextNode(alt, TextType.Image, src))
+            unparsed = split[1]
+
+        if unparsed != "":
+            result.append(TextNode(unparsed, TextType.Text))
+ 
+    return result
+
+def split_nodes_link(old_nodes) -> list[TextNode]:
+    result = []
+    for old_node in old_nodes:
+        images = extract_markdown_links(old_node.text)
+        if len(images) == 0:
+            result.append(old_node)
+            continue
+
+        unparsed = old_node.text
+        for (value, href) in images:
+            split = unparsed.split(f"[{value}]({href})", 1)
+            if split[0] != "":
+                result.append(TextNode(split[0], TextType.Text))
+            result.append(TextNode(value, TextType.Link, href))
+
+            unparsed = split[1]
+
+        if unparsed != "":
+            result.append(TextNode(unparsed, TextType.Text))
+     
+    return result
+

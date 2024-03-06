@@ -121,6 +121,40 @@ class TestTextNode(unittest.TestCase):
         
         self.assertRaises(InvalidMarkdownError, split_nodes_delimiter, node, TextType.Italic)
 
+    def test_split_links(self):
+        node = TextNode(
+            "This is text with an [link](https://boot.dev) and another [second link](http://github.com)",
+            TextType.Text,
+        )
+        new_nodes = split_nodes_link([node])
+
+        expected = [
+                TextNode("This is text with an ", TextType.Text),
+                TextNode("link", TextType.Link, "https://boot.dev"),
+                TextNode(" and another ", TextType.Text),
+                TextNode(
+                    "second link", TextType.Link, "http://github.com"
+                ),
+            ]
+        self.assertListEqual(expected, new_nodes)
+
+    def test_split_images(self):
+        node = TextNode(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",
+            TextType.Text,
+        )
+        new_nodes = split_nodes_image([node])
+        expected = [
+                TextNode("This is text with an ", TextType.Text),
+                TextNode("image", TextType.Image, "https://i.imgur.com/zjjcJKZ.png"),
+                TextNode(" and another ", TextType.Text),
+                TextNode(
+                    "second image", TextType.Image, "https://i.imgur.com/3elNhQu.png"
+                ),
+            ]
+        self.assertListEqual(expected, new_nodes)
+
+
 if __name__ == "__main__":
     unittest.main()
 
