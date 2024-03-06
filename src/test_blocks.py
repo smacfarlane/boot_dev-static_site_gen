@@ -1,6 +1,7 @@
 import unittest
 
-from blocks import markdown_to_blocks, block_to_block_type, BlockType
+from blocks import markdown_to_blocks, block_to_block_type, BlockType, markdown_to_html_node
+from htmlnode import ParentNode, LeafNode
 
 class TestBlocks(unittest.TestCase):
     def test_simple_markdown(self):
@@ -132,4 +133,42 @@ other item
         self.assertEqual(BlockType.Paragraph, block_to_block_type(mixed))
         
         
-        
+    def test_markdown_to_nodes(self):
+        document = """# heading
+
+### heading 
+
+> quote
+> quote
+
+1. list
+2. item
+
+- list
+- list
+
+``` code ```
+
+
+Cats make the best pets
+"""
+        expected = ParentNode("div", [
+            LeafNode("h1", "heading"),
+            LeafNode("h3", "heading"),
+            LeafNode("blockquote", " quote\n quote"),
+            ParentNode("ol", [
+                LeafNode("li", " list"),
+                LeafNode("li", " item"),
+            ]),
+            ParentNode("ul", [
+                LeafNode("li", " list"),
+                LeafNode("li", " list"),
+            ]),
+            ParentNode("pre", [LeafNode("code", " code ")]),
+            LeafNode("p", "Cats make the best pets")
+        ])
+
+        node = markdown_to_html_node(document)
+
+        self.assertEqual(expected, node)
+

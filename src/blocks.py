@@ -1,6 +1,8 @@
 from enum import Enum
 import re
 
+from htmlnode import HtmlNode, LeafNode, ParentNode
+
 class BlockType(Enum):
     Paragraph = 1,
     Heading = 2,
@@ -62,3 +64,71 @@ def markdown_to_blocks(md: str) -> list[str]:
             result.append(para)
 
     return result
+
+def heading_to_html_node(block: str) -> HtmlNode:
+    # Assumption: this is a heading block and therefore is one to six '#' followed by a space
+    split = block.split(' ', 1)
+    heading = f"h{len(split[0])}"
+    text = split[1]
+    return LeafNode(heading, text)
+
+def unordered_list_to_html_node(block: str) -> HtmlNode:
+    lines = block.split("\n")
+    children = []
+    for line in lines:
+        node = LeafNode("li", line[1:])
+        children.append(node)
+    return ParentNode("ul", children)
+
+def ordered_list_to_html_node(block: str) -> HtmlNode:
+    lines = block.split("\n")
+    children = []
+    for line in lines:
+        # Assumption: each line starts with Number.
+        line = line.split(".", 1)[1]
+        node = LeafNode("li", line)
+        children.append(node)
+    return ParentNode("ol", children)
+
+def code_block_to_html_node(block:str) -> HtmlNode:
+    code = block[3:-3]
+    
+    return ParentNode("pre", [LeafNode("code", code)])
+
+def quote_block_to_html_node(block:str) -> HtmlNode:
+    lines = block.split("\n")
+    result = []
+    for line in lines:
+        result.append(line[1:])
+
+    return LeafNode("blockquote", "\n".join(result))
+
+def paragraph_to_html_node(block:str) -> HtmlNode:
+    return LeafNode("p", block)
+
+def markdown_to_html_node(md: str) -> HtmlNode:
+    blocks = markdown_to_blocks(md)
+
+    result = []
+    for block in blocks:
+        block_type = block_to_block_type(block)
+
+        if block_type == BlockType.Paragraph:
+            result.append(paragraph_to_html_node(block))
+        elif block_type == BlockType.Quote:
+            result.append(quote_block_to_html_node(block))
+        elif block_type == BlockType.Code:
+            result.append(code_block_to_html_node(block))
+        elif block_type == BlockType.OrderedList:
+            result.append(ordered_list_to_html_node(block))
+        elif block_type == BlockType.UnorderedList:
+            result.append(unordered_list_to_html_node(block))
+        elif block_type == BlockType.Heading:
+            result.append(heading_to_html_node(block))
+        else:
+            raise ValueError(f"unhandled block type: {block_type}")
+
+    return ParentNode("div", result)
+
+
+
