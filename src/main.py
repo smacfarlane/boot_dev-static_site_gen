@@ -3,10 +3,12 @@ from blocks import markdown_to_html_node
 import os
 import shutil
 import re
+from pathlib import Path
 
 def main():
     copy_static("static")
-    generate_page("content/index.md", "templates/template.html", "public/index.html")
+    generate_pages_recursive("content", "templates/template.html", "public")
+    # generate_page("content/index.md", "templates/template.html", "public/index.html")
 
 PUBLIC="public"
 NoHeadingError = Exception("no h1 found")
@@ -47,8 +49,7 @@ def extract_title(md: str) -> str:
     return title[0]
 
 def generate_page(source_path: str, template_path: str, dest_path: str) -> None:
-    print(f"Generating page from {source_path} to {dest_path} using {template_path}")
-
+    print(f"Generate:   {source_path} -> {dest_path}  ({template_path})")
     f = open(source_path, 'r')
     source = f.read()
     f.close()
@@ -75,6 +76,19 @@ def generate_page(source_path: str, template_path: str, dest_path: str) -> None:
 
     
     return None
+
+def generate_pages_recursive(content_path, template_path, dest_path):
+    if not os.path.exists(dest_path):
+        os.mkdir(dest_path)
+
+    for entry in os.listdir(content_path):
+        source_path = os.path.join(content_path, entry)
+        dest = os.path.join(dest_path, entry)
+        if os.path.isdir(source_path):
+            generate_pages_recursive(source_path, template_path, dest)
+        else:
+            dest = Path(dest).with_suffix(".html")
+            generate_page(source_path, template_path, dest)
 
 main()
 
