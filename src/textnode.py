@@ -68,7 +68,7 @@ def text_node_to_html_node(text_node) -> HtmlNode:
     if text_node.text_type == TextType.Link:
         return LeafNode("a", text_node.text, {"href": text_node.url})
     if text_node.text_type == TextType.Image:
-        return LeafNode("img", None, {"src": text_node.url, "alt": text_node.text})
+        return LeafNode("img", "", {"src": text_node.url, "alt": text_node.text})
 
     raise InvalidTextTypeError(text_node.text_type)
 
@@ -119,13 +119,13 @@ def split_nodes_link(old_nodes) -> list[TextNode]:
         if isinstance(old_node, str):
             raise ValueError(f"{old_nodes} - {old_node}")
 
-        images = extract_markdown_links(old_node.text)
-        if len(images) == 0:
+        links = extract_markdown_links(old_node.text)
+        if len(links) == 0:
             result.append(old_node)
             continue
 
         unparsed = old_node.text
-        for (value, href) in images:
+        for (value, href) in links:
             split = unparsed.split(f"[{value}]({href})", 1)
             if split[0] != "":
                 result.append(TextNode(split[0], TextType.Text))
@@ -150,3 +150,4 @@ def text_to_textnodes(text) -> list[TextNode]:
     result = split_nodes_link(result)
 
     return result
+

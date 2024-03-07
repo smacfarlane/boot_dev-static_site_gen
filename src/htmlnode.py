@@ -26,6 +26,12 @@ class HtmlNode:
                 self.children == other.children and
                 self.props == other.props)
 
+    def debug(self, depth=0): 
+        print(f"{" " * depth}({self.tag}, {self.value}, {self.props_to_html()})")
+        if self.children is not None:
+            for c in self.children:
+                c.debug(depth + 1)
+
 class LeafNode(HtmlNode):
     def __init__(self, tag=None, value=None, props=None) -> None:
         super().__init__(tag, value, None, props)
@@ -33,7 +39,7 @@ class LeafNode(HtmlNode):
 
     def to_html(self) -> str:
         if self.value is None:
-            raise ValueError("leaf node requires value")
+            raise ValueError(f"leaf node requires value: {self.tag}")
         if self.tag is None:
             return self.value
 

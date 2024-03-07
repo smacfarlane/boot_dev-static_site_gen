@@ -2,6 +2,7 @@ from enum import Enum
 import re
 
 from htmlnode import HtmlNode, LeafNode, ParentNode
+from textnode import text_to_textnodes, text_node_to_html_node
 
 class BlockType(Enum):
     Paragraph = 1,
@@ -70,41 +71,51 @@ def heading_to_html_node(block: str) -> HtmlNode:
     split = block.split(' ', 1)
     heading = f"h{len(split[0])}"
     text = split[1]
-    return LeafNode(heading, text)
+    children = text_to_children(text)
+    return ParentNode(heading, children)
 
 def unordered_list_to_html_node(block: str) -> HtmlNode:
     lines = block.split("\n")
-    children = []
+    items = []
     for line in lines:
-        node = LeafNode("li", line[1:])
-        children.append(node)
-    return ParentNode("ul", children)
+        line = line[2:]
+        children = text_to_children(line)
+        node = ParentNode("li", children)
+        items.append(node)
+    return ParentNode("ul", items)
 
 def ordered_list_to_html_node(block: str) -> HtmlNode:
     lines = block.split("\n")
-    children = []
+    items = []
     for line in lines:
         # Assumption: each line starts with Number.
-        line = line.split(".", 1)[1]
-        node = LeafNode("li", line)
-        children.append(node)
-    return ParentNode("ol", children)
+        line = line.split(". ", 1)[1]
+        children = text_to_children(line)
+
+        node = ParentNode("li", children)
+        items.append(node)
+    return ParentNode("ol", items)
 
 def code_block_to_html_node(block:str) -> HtmlNode:
-    code = block[3:-3]
+    code = block[4:-3]
+    children = text_to_children(code)
     
-    return ParentNode("pre", [LeafNode("code", code)])
+    return ParentNode("pre", [ParentNode("code", children)])
 
 def quote_block_to_html_node(block:str) -> HtmlNode:
     lines = block.split("\n")
     result = []
     for line in lines:
         result.append(line[1:])
+    result = " ".join(result)
+    children = text_to_children(result)
 
-    return LeafNode("blockquote", "\n".join(result))
+    return ParentNode("blockquote", children)
 
 def paragraph_to_html_node(block:str) -> HtmlNode:
-    return LeafNode("p", block)
+    para = " ".join(block.split("\n"))
+    children = text_to_children(para)
+    return ParentNode("p", children)
 
 def markdown_to_html_node(md: str) -> HtmlNode:
     blocks = markdown_to_blocks(md)
@@ -129,6 +140,15 @@ def markdown_to_html_node(md: str) -> HtmlNode:
             raise ValueError(f"unhandled block type: {block_type}")
 
     return ParentNode("div", result)
+
+def text_to_children(text: str) -> list[HtmlNode]:
+    nodes = text_to_textnodes(text)
+    children = []
+    for node in nodes:
+        html = text_node_to_html_node(node)
+        children.append(html)
+    return children
+
 
 
 

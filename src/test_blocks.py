@@ -153,19 +153,33 @@ other item
 Cats make the best pets
 """
         expected = ParentNode("div", [
-            LeafNode("h1", "heading"),
-            LeafNode("h3", "heading"),
-            LeafNode("blockquote", " quote\n quote"),
+            ParentNode("h1", [
+                LeafNode(None, "heading"),
+            ]),
+            ParentNode("h3", [
+                LeafNode(None, "heading"),
+            ]),
+            ParentNode("blockquote", [
+                LeafNode(None, " quote  quote")
+            ]),
             ParentNode("ol", [
-                LeafNode("li", " list"),
-                LeafNode("li", " item"),
+                ParentNode("li", [
+                    LeafNode(None,"list"),
+                ]),
+                ParentNode("li", [
+                    LeafNode(None,"item"),
+                ]),
             ]),
             ParentNode("ul", [
-                LeafNode("li", " list"),
-                LeafNode("li", " list"),
+                ParentNode("li", [
+                    LeafNode(None,"list"),
+                ]),
+                ParentNode("li", [
+                    LeafNode(None,"list"),
+                ])
             ]),
-            ParentNode("pre", [LeafNode("code", " code ")]),
-            LeafNode("p", "Cats make the best pets")
+            ParentNode("pre", [ParentNode("code", [LeafNode(None, "code ")])]),
+            ParentNode("p", [LeafNode(None, "Cats make the best pets")])
         ])
 
         node = markdown_to_html_node(document)
